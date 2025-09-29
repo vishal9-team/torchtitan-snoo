@@ -100,19 +100,32 @@ class OptimizersContainer(Optimizer, Stateful, Generic[T]):
             get_optimizer_state_dict,
             options=StateDictOptions(flatten_optimizer_state_dict=True),
         )
-        return {
+        state_dict = {
             k: v
             for sd in map(func, self.model_parts, self.optimizers)
             for k, v in sd.items()
         }
+        for post_hook in self._optimizer_state_dict_post_hooks.values():
+            hook_result = post_hook(self, state_dict)
+            if hook_result is not None:
+                state_dict = hook_result
+        return state_dict        
 
     def load_state_dict(self, state_dict: dict[str, Any]) -> None:
+        for pre_hook in self._optimizer_load_state_dict_pre_hooks.values():
+            hook_result = pre_hook(self, state_dict)
+            if hook_result is not None:
+                state_dict = hook_result
+
         func = functools.partial(
             set_optimizer_state_dict,
             optim_state_dict=state_dict,
             options=StateDictOptions(flatten_optimizer_state_dict=True),
         )
         list(map(func, self.model_parts, self.optimizers))
+
+        for post_hook in self._optimizer_load_state_dict_post_hooks.values():
+            post_hook(self)
 
     def _validate_length(self, expected_length: int) -> None:
         assert expected_length == len(self.optimizers), (
