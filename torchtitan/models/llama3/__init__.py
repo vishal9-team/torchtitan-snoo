@@ -4,12 +4,15 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
+from functools import partial
+
 from torchtitan.components.loss import build_cross_entropy_loss
 from torchtitan.components.lr_scheduler import build_lr_schedulers
 from torchtitan.components.optimizer import build_optimizers
 from torchtitan.components.tokenizer import build_hf_tokenizer
 from torchtitan.components.validate import build_validator
 from torchtitan.datasets.hf_datasets import build_hf_dataloader
+from torchtitan.experiments.diloco.diloco_adapter import build_diloco_optimizers
 from torchtitan.protocols.train_spec import register_train_spec, TrainSpec
 
 from .infra.parallelize import parallelize_llama
@@ -17,9 +20,6 @@ from .infra.pipeline import pipeline_llama
 from .model.args import TransformerModelArgs
 from .model.model import Transformer
 from .model.state_dict_adapter import Llama3StateDictAdapter
-from .model.diloco_adapter import build_diloco_optimizers
-
-from functools import partial
 
 __all__ = [
     "parallelize_llama",
@@ -43,18 +43,45 @@ llama3_configs = {
         use_flex_attn=True,
         attn_mask_type="block_causal",
     ),
-    "6e19": TransformerModelArgs(
-        dim=1792,
-        n_layers=21,
-        n_heads=14,
+    "chinch125M": TransformerModelArgs(
+        dim=1024,
+        n_layers=10,
+        n_heads=8,
         # n_kv_heads=8,
         ffn_dim_multiplier=1,
         multiple_of=256,
         # rope_theta=500000,
     ),
-    "6e19": TransformerModelArgs(
+    "chinch300M": TransformerModelArgs(
+        dim=1024,
+        n_layers=20,
+        n_heads=16,
+        # n_kv_heads=8,
+        ffn_dim_multiplier=1,
+        multiple_of=256,
+        # rope_theta=500000,
+    ),
+    "chinch500M": TransformerModelArgs(
+        dim=1280,
+        n_layers=22,
+        n_heads=10,
+        # n_kv_heads=8,
+        ffn_dim_multiplier=1,
+        multiple_of=256,
+        # rope_theta=500000,
+    ),
+    "chinch720M": TransformerModelArgs(
+        dim=1536,
+        n_layers=20,
+        n_heads=12,
+        # n_kv_heads=8,
+        ffn_dim_multiplier=1,
+        multiple_of=256,
+        # rope_theta=500000,
+    ),
+    "chinch1B": TransformerModelArgs(
         dim=1792,
-        n_layers=21,
+        n_layers=23,
         n_heads=14,
         # n_kv_heads=8,
         ffn_dim_multiplier=1,
